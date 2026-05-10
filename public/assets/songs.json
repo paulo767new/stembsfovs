@@ -1,9 +1,11 @@
 [
     {
+        "nombre": "Tren al sur",
         "codigo": "tas",
         "espera_segundos": 2.70
     },
     {
+        "nombre": "Cuando te vayas",
         "codigo": "ctv",
         "espera_segundos": 2.64
     }

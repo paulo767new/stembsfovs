@@ -12,7 +12,8 @@ const STEMS_INFO = [
 ];
 
 function App() {
-  const [songData, setSongData] = useState(null);
+  const [allSongs, setAllSongs] = useState([]);
+  const [currentPath, setCurrentPath] = useState(window.location.pathname.replace(/\/$/, ""));
   const [activeStems, setActiveStems] = useState({
     vocals: false, drums: false, bass: false, ins: false
   });
@@ -28,41 +29,43 @@ function App() {
       .then(res => res.json())
       .then(data => {
         if (data && data.length > 0) {
-          const pathCode = window.location.pathname.substring(1).replace(/\/$/, "");
-          let matchedSong = data.find(s => s.codigo === pathCode);
-          
-          if (!matchedSong && pathCode === "") {
-            matchedSong = data[0];
-            window.history.replaceState(null, "", `/${matchedSong.codigo}`);
-          }
-          
-          if (matchedSong) {
-            setSongData(matchedSong);
-          } else {
-            setSongData({ error: true });
-          }
+          setAllSongs(data);
         }
       })
       .catch(err => console.error("Error loading songs.json", err));
+
+    // Handle back button navigation
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname.replace(/\/$/, ""));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  const songData = allSongs.find(s => `/${s.codigo}` === currentPath);
+
   useEffect(() => {
-    if (songData && !songData.error && !audioSystemRef.current) {
+    // When songData changes (navigated to a song), load its stems
+    if (songData && !audioSystemRef.current) {
       const sys = new AudioSystem();
       audioSystemRef.current = sys;
       sys.loadStems(songData.codigo, STEMS_INFO.map(s => s.key)).then(() => {
-        // Force a 3 second delay to ensure audios are fully ready
         setTimeout(() => {
           setIsReady(true);
         }, 3000);
       });
     }
+
     return () => {
-      if (audioSystemRef.current) {
-        audioSystemRef.current.pause();
+      if (audioSystemRef.current && (!songData || songData.codigo !== currentPath.substring(1))) {
+        audioSystemRef.current.stop();
+        audioSystemRef.current = null;
+        setIsReady(false);
+        setIsPlaying(false);
+        setActiveStems({ vocals: false, drums: false, bass: false, ins: false });
       }
     }
-  }, [songData]);
+  }, [songData, currentPath]);
 
   useEffect(() => {
     if (!audioSystemRef.current || !isReady) return;
@@ -120,16 +123,60 @@ function App() {
     }
   };
 
-  if (songData && songData.error) {
-    return <div className="loading">Canción no encontrada</div>;
+  if (allSongs.length === 0) {
+    return <div className="loading">Cargando datos...</div>;
   }
 
-  if (!isReady || !songData) {
+  // --- MENU VIEW ---
+  if (currentPath === '/' || currentPath === '') {
+    return (
+      <div className="app-container menu-container">
+        <h1 className="menu-title">Selecciona una pista</h1>
+        <div className="song-grid">
+          {allSongs.map(song => (
+            <div 
+              key={song.codigo} 
+              className="song-card"
+              onClick={() => {
+                const newPath = `/${song.codigo}`;
+                window.history.pushState(null, "", newPath);
+                setCurrentPath(newPath);
+              }}
+            >
+              <img src={`/assets/covers/${song.codigo}.jpg`} alt={song.nombre} className="song-card-cover" />
+              <div className="song-card-title">{song.nombre}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // --- PLAYER VIEW ---
+  if (!songData) {
+    return (
+      <div className="app-container menu-container">
+        <h1 className="menu-title">Canción no encontrada</h1>
+        <button className="back-button" onClick={() => {
+          window.history.pushState(null, "", "/");
+          setCurrentPath("/");
+        }}>Volver al menú</button>
+      </div>
+    );
+  }
+
+  if (!isReady) {
     return <div className="loading">Cargando audios...</div>;
   }
 
   return (
     <div className="app-container">
+      <button className="back-button-small" onClick={() => {
+        if (audioSystemRef.current) audioSystemRef.current.stop();
+        window.history.pushState(null, "", "/");
+        setCurrentPath("/");
+      }}>← Volver</button>
+
       <div className="cover-art-container">
         <img 
           src={`/assets/covers/${songData.codigo}.jpg`} 
