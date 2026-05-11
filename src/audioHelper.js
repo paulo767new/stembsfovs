@@ -24,7 +24,7 @@ export class AudioSystem {
     
     for (const stem of stemsList) {
       const audio = new Audio();
-      audio.src = `/assets/stems/${codigo}/${stem}.wav`;
+      audio.src = `/assets/stems/${codigo}/${stem}.m4a`;
       audio.loop = true; // Let's loop the track for practice
       audio.crossOrigin = "anonymous";
       
