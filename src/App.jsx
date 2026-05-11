@@ -20,6 +20,7 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [alignMode, setAlignMode] = useState(true);
   const [isReady, setIsReady] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const audioSystemRef = useRef(null);
   const alignTimeoutRef = useRef(null);
@@ -129,11 +130,24 @@ function App() {
 
   // --- MENU VIEW ---
   if (currentPath === '/' || currentPath === '') {
+    const filteredSongs = allSongs.filter(song => 
+      song.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      song.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
       <div className="app-container menu-container">
-        <h1 className="menu-title">Selecciona una pista</h1>
+        <div className="search-container">
+          <input 
+            type="text" 
+            placeholder="Buscar canción..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
         <div className="song-grid">
-          {allSongs.map(song => (
+          {filteredSongs.map(song => (
             <div 
               key={song.codigo} 
               className="song-card"
