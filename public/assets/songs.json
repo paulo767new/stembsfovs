@@ -13,5 +13,15 @@
         "nombre": "Miño",
         "codigo": "m",
         "espera_segundos": 1.34
+    },
+    {
+        "nombre": "Lonely Day",
+        "codigo": "ld",
+        "espera_segundos": 3.23
+    },
+    {
+        "nombre": "Latinoamérica Es un Pueblo al Sur de Estados Unidos",
+        "codigo": "leupasdeu",
+        "espera_segundos": 6.89
     }
 ]
